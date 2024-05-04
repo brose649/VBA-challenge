@@ -1,0 +1,130 @@
+vba_code_alphabetical_testing
+
+Sub stocks():
+
+    ' Declare variables
+    Dim ticker As String
+    Dim stock_vol As LongLong
+    Dim vol_total As LongLong
+    
+    Dim i As Long
+    Dim k As Long
+    
+    Dim ticker_open As Double
+    Dim ticker_close As Double
+    Dim qprice_change As Double
+    Dim percent_change As Double
+    Dim lastRow As Long
+    
+    Dim ws As Worksheet
+    
+    For Each ws In ThisWorkbook.Worksheets
+        
+        ' Create a way to figure out the last row of a given stock. Retrieved via A. Booth from Xpert:
+        lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+        vol_total = 0
+        k = 2
+        
+        ' Write out Leaderboard Column Titles
+        ws.Range("I1").Value = "Ticker"
+        ws.Range("J1").Value = "Quarterly Change"
+        ws.Range("K1").Value = "Percent Change"
+        ws.Range("L1").Value = "Volume"
+        
+        ' assign first ticker, Column C, Cells i, 3 as open
+        ticker_open = ws.Cells(2, 3).Value
+    
+        For i = 2 To lastRow:
+            stock_vol = ws.Cells(i, 7).Value
+            ticker = ws.Cells(i, 1).Value
+            
+            ' Check if the ticker in the next row is different
+            If (ws.Cells(i + 1, 1).Value <> ticker) Then
+                vol_total = vol_total + stock_vol
+                
+                ' Define ticker closing price
+                ticker_close = ws.Cells(i, 6).Value
+                
+                ' Calculate quarterly price change
+                qprice_change = ticker_close - ticker_open
+    
+                'Check if open price is 0 first
+                If (ticker_open > 0) Then
+                    percent_change = qprice_change / ticker_open
+                Else
+                    percent_change = 0
+                End If
+                
+                ws.Cells(k, 9).Value = ticker
+                ws.Cells(k, 10).Value = qprice_change
+                ws.Cells(k, 11).Value = percent_change
+                ws.Cells(k, 12).Value = vol_total
+    
+                ' Conditional color code formatting for quarterly price change
+                If (qprice_change > 0) Then
+                    ws.Cells(k, 10).Interior.ColorIndex = 4 ' Green
+                ElseIf (qprice_change < 0) Then
+                    ws.Cells(k, 10).Interior.ColorIndex = 3 ' Red
+                Else
+                    ws.Cells(k, 10).Interior.ColorIndex = 2 ' White
+                End If
+                
+                ' Conditional color code formatting for percent change
+                If (percent_change > 0) Then
+                    ws.Cells(k, 11).Interior.ColorIndex = 4 ' Green
+                ElseIf (percent_change < 0) Then
+                    ws.Cells(k, 11).Interior.ColorIndex = 3 ' Red
+                Else
+                    ws.Cells(k, 11).Interior.ColorIndex = 2 ' White
+                End If
+                
+                ' reset
+                vol_total = 0
+                k = k + 1
+                ticker_open = ws.Cells(i + 1, 3).Value ' This looks ahead at the next ticker open cell
+            Else
+                ' If the same, then continue to add to the vol_total
+                vol_total = vol_total + stock_vol
+            End If
+        Next i
+        
+        ' Create "Greatest % increase", "Greatest % decrease", and "Greatest total volume"
+        
+         ' Write out "Ticker" and "Value"
+        ws.Range("N1").Value = "Percent Changes"
+        ws.Range("O1").Value = "Ticker"
+        ws.Range("P1").Value = "Value"
+        
+        ws.Cells(2, 14).Value = "Greatest Percent Increase"
+        ws.Cells(3, 14).Value = "Greatest Percent Decrease"
+        ws.Cells(4, 14).Value = "Greatest Total Volume"
+        
+        ' Get MAX & MIN from Column K
+        ws.Range("P2") = "%" & WorksheetFunction.Max(ws.Range("K2:K" & lastRow)) * 100
+        ws.Range("P3") = "%" & WorksheetFunction.Min(ws.Range("K2:K" & lastRow)) * 100
+        ws.Range("P4") = WorksheetFunction.Max(ws.Range("L2:L" & lastRow))
+        
+        Greatest_increase = WorksheetFunction.Match(WorksheetFunction.Max(ws.Range("K2:K" & lastRow)), ws.Range("K2:K" & lastRow), 0)
+        Greatest_decrease = WorksheetFunction.Match(WorksheetFunction.Min(ws.Range("K2:K" & lastRow)), ws.Range("K2:K" & lastRow), 0)
+        Greatest_volume = WorksheetFunction.Match(WorksheetFunction.Max(ws.Range("L2:L" & lastRow)), ws.Range("L2:L" & lastRow), 0)
+        
+        ws.Range("O2") = ws.Cells(Greatest_increase + 1, 9)
+        ws.Range("O3") = ws.Cells(Greatest_decrease + 1, 9)
+        ws.Range("O4") = ws.Cells(Greatest_volume + 1, 9)
+    
+    Next ws
+    
+End Sub
+
+Sub reset()
+    Dim ws As Worksheet
+    
+    For Each ws In ThisWorkbook.Worksheets
+        ws.Range("I:P").Value = ""
+        ws.Range("I:P").Interior.ColorIndex = 2
+    Next ws
+    
+End Sub
+
+
